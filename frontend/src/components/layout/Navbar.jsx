@@ -127,10 +127,9 @@ const Navbar_Sophisticated = () => {
   const navigation = [
     { name: 'Home', path: '/' },
     { name: 'Accounts', path: '/dashboard' },
-    { name: 'Transfer', path: '/transfer' },
-    { name: 'Investments', path: '/investments' },
+    { name: 'Transactions', path: '/transactions' },
+    // { name: 'Transfer', path: '/transfer' },
     { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' },
   ];
 
   const handleMobileMenuToggle = () => {

@@ -31,7 +31,6 @@ const Footer = () => {
       { title: 'Loans & Mortgages', href: '/services/loans' },
     ],
     'Support': [
-      { title: 'Contact Us', href: '/contact' },
       { title: 'Help Center', href: '/help' },
       { title: 'Security Center', href: '/security' },
       { title: 'Branch Locator', href: '/branches' },
