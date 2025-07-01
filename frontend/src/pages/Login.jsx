@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -40,7 +40,7 @@ const LoginPaper = styled(Paper)(({ theme }) => ({
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const { showSuccess, showError } = useNotification();
 
   const [formData, setFormData] = useState({
@@ -52,6 +52,14 @@ const Login = () => {
   const [error, setError] = useState('');
 
   const from = location.state?.from?.pathname || '/dashboard';
+
+  // Watch for authentication success and navigate
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      showSuccess('Welcome back! Successfully logged in.');
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, from, showSuccess]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -66,12 +74,10 @@ const Login = () => {
 
     try {
       await login(formData.email, formData.password);
-      showSuccess('Welcome back! Successfully logged in.');
-      navigate(from, { replace: true });
+      // Navigation will happen in useEffect when isAuthenticated becomes true
     } catch (err) {
       setError('Invalid email or password');
       showError('Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

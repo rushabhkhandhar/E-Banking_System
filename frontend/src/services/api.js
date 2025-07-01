@@ -100,7 +100,7 @@ export const accountAPI = {
   },
 
   updateAccount: async (accountId, updateData) => {
-    const response = await api.put(`/accounts/${accountId}`, updateData);
+    const response = await api.patch(`/accounts/${accountId}`, updateData);
     return response.data;
   },
 
@@ -113,32 +113,98 @@ export const accountAPI = {
     const response = await api.get(`/accounts/${accountId}/balance`);
     return response.data;
   },
+
+  freezeAccount: async (accountId, freezeData) => {
+    const response = await api.patch(`/accounts/${accountId}/freeze`, freezeData);
+    return response.data;
+  },
+
+  unfreezeAccount: async (accountId) => {
+    const response = await api.patch(`/accounts/${accountId}/unfreeze`);
+    return response.data;
+  },
 };
 
 // Transaction APIs
 export const transactionAPI = {
-  getTransactions: async (params = {}) => {
-    const response = await api.get('/transactions', { params });
+  // Get user's transaction history
+  getUserTransactions: async (params = {}) => {
+    const response = await api.get('/users/transactions', { params });
     return response.data;
   },
 
+  // Get account-specific transactions
+  getAccountTransactions: async (accountId, params = {}) => {
+    const response = await api.get(`/transactions/account/${accountId}`, { params });
+    return response.data;
+  },
+
+  // Get all user transactions across accounts
+  getAllUserTransactions: async (params = {}) => {
+    const response = await api.get('/transactions/user/all', { params });
+    return response.data;
+  },
+
+  // Get specific transaction by ID
   getTransactionById: async (transactionId) => {
     const response = await api.get(`/transactions/${transactionId}`);
     return response.data;
   },
 
-  createTransaction: async (transactionData) => {
-    const response = await api.post('/transactions', transactionData);
+  // Deposit money
+  deposit: async (accountId, amount, description) => {
+    const response = await api.post(`/transactions/deposit/${accountId}`, {
+      amount,
+      description
+    });
     return response.data;
   },
 
-  transferMoney: async (transferData) => {
-    const response = await api.post('/transactions/transfer', transferData);
+  // Withdraw money
+  withdraw: async (accountId, amount, description) => {
+    const response = await api.post(`/transactions/withdraw/${accountId}`, {
+      amount,
+      description
+    });
     return response.data;
   },
 
-  getAccountTransactions: async (accountId, params = {}) => {
-    const response = await api.get(`/accounts/${accountId}/transactions`, { params });
+  // Transfer money
+  transfer: async (fromAccountId, toAccountNumber, amount, description) => {
+    const response = await api.post(`/transactions/transfer/${fromAccountId}`, {
+      toAccountNumber,
+      amount,
+      description
+    });
+    return response.data;
+  },
+};
+
+// User APIs
+export const userAPI = {
+  // Get user dashboard data
+  getDashboard: async () => {
+    const response = await api.get('/users/dashboard');
+    return response.data;
+  },
+
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get('/users/profile');
+    return response.data;
+  },
+
+  // Update user profile
+  updateProfile: async (userData) => {
+    const response = await api.patch('/users/profile', userData);
+    return response.data;
+  },
+
+  // Get account statement
+  getAccountStatement: async (accountId, startDate, endDate) => {
+    const response = await api.get(`/users/account-statement/${accountId}`, {
+      params: { startDate, endDate }
+    });
     return response.data;
   },
 };

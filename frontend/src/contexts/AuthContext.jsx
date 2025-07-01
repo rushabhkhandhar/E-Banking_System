@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getProfile();
           dispatch({ 
             type: AuthActionTypes.LOAD_USER_SUCCESS, 
-            payload: response.data?.user || response.user 
+            payload: response.data?.user 
           });
         } catch (error) {
           dispatch({ 
@@ -141,10 +141,20 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AuthActionTypes.LOGIN_START });
       const response = await authAPI.login(email, password);
+      
+      // Handle backend response structure: { status, message, token, data: { user } }
+      const token = response.token;
+      const user = response.data?.user;
+      
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
+      
       dispatch({ 
         type: AuthActionTypes.LOGIN_SUCCESS, 
-        payload: response 
+        payload: { token, user }
       });
+      
       return response;
     } catch (error) {
       const errorMessage = handleAPIError(error);
@@ -161,9 +171,18 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AuthActionTypes.REGISTER_START });
       const response = await authAPI.register(userData);
+      
+      // Handle backend response structure: { status, message, token, data: { user } }
+      const token = response.token;
+      const user = response.data?.user;
+      
+      if (!token || !user) {
+        throw new Error('Invalid response from server');
+      }
+      
       dispatch({ 
         type: AuthActionTypes.REGISTER_SUCCESS, 
-        payload: response 
+        payload: { token, user }
       });
       return response;
     } catch (error) {

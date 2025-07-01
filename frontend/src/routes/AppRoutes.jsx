@@ -24,7 +24,7 @@ import UserManagement from '../pages/admin/UserManagement';
 import AccountManagement from '../pages/admin/AccountManagement';
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return <div>Loading...</div>;
@@ -40,11 +40,11 @@ function AppRoutes() {
       {/* Auth Routes - redirect if already logged in */}
       <Route 
         path="/login" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />} 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
       />
       <Route 
         path="/register" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Register />} 
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} 
       />
 
       {/* Protected Routes */}
