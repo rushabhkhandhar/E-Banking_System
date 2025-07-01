@@ -29,6 +29,7 @@ import {
   Phone,
   LocationOn,
   ExitToApp,
+  AdminPanelSettings,
 } from '@mui/icons-material';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -206,6 +207,27 @@ const Navbar_Sophisticated = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {user ? (
                 <>
+                  {/* Show Admin Dashboard button if user is admin */}
+                  {user.role === 'admin' && (
+                    <Button
+                      component={Link}
+                      to="/admin/dashboard"
+                      variant="outlined"
+                      sx={{ 
+                        color: theme.palette.warning.main,
+                        borderColor: theme.palette.warning.main,
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        '&:hover': {
+                          backgroundColor: alpha(theme.palette.warning.main, 0.08),
+                          borderColor: theme.palette.warning.main,
+                        },
+                      }}
+                    >
+                      Admin Panel
+                    </Button>
+                  )}
+                  
                   <UserMenuButton
                     onClick={handleUserMenuOpen}
                     endIcon={<KeyboardArrowDown />}
@@ -214,7 +236,7 @@ const Navbar_Sophisticated = () => {
                         sx={{ 
                           width: 28, 
                           height: 28,
-                          backgroundColor: theme.palette.primary.main,
+                          backgroundColor: user.role === 'admin' ? theme.palette.warning.main : theme.palette.primary.main,
                           fontSize: '0.875rem',
                         }}
                       >
@@ -222,7 +244,7 @@ const Navbar_Sophisticated = () => {
                       </Avatar>
                     }
                   >
-                    {user.firstName || 'Account'}
+                    {user.firstName || 'Account'} {user.role === 'admin' && '(Admin)'}
                   </UserMenuButton>
                   <Menu
                     anchorEl={userMenuAnchor}
@@ -232,25 +254,41 @@ const Navbar_Sophisticated = () => {
                       sx: {
                         mt: 1,
                         borderRadius: 2,
-                        minWidth: 200,
+                        minWidth: 220,
                         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
                         border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
                       },
                     }}
                   >
-                    <MenuItem onClick={() => { navigate('/dashboard'); handleUserMenuClose(); }}>
-                      <Person sx={{ mr: 2 }} />
-                      Dashboard
-                    </MenuItem>
-                    <MenuItem onClick={() => { navigate('/profile'); handleUserMenuClose(); }}>
-                      <Person sx={{ mr: 2 }} />
-                      Profile
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem onClick={handleLogout} sx={{ color: theme.palette.error.main }}>
-                      <ExitToApp sx={{ mr: 2 }} />
-                      Sign Out
-                    </MenuItem>
+                    {user.role === 'admin' ? (
+                      <>
+                        <MenuItem onClick={() => { navigate('/admin/dashboard'); handleUserMenuClose(); }}>
+                          <Person sx={{ mr: 2 }} />
+                          Admin Dashboard
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={handleLogout} sx={{ color: theme.palette.error.main }}>
+                          <ExitToApp sx={{ mr: 2 }} />
+                          Sign Out
+                        </MenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <MenuItem onClick={() => { navigate('/dashboard'); handleUserMenuClose(); }}>
+                          <Person sx={{ mr: 2 }} />
+                          Dashboard
+                        </MenuItem>
+                        <MenuItem onClick={() => { navigate('/profile'); handleUserMenuClose(); }}>
+                          <Person sx={{ mr: 2 }} />
+                          Profile
+                        </MenuItem>
+                        <Divider />
+                        <MenuItem onClick={handleLogout} sx={{ color: theme.palette.error.main }}>
+                          <ExitToApp sx={{ mr: 2 }} />
+                          Sign Out
+                        </MenuItem>
+                      </>
+                    )}
                   </Menu>
                 </>
               ) : (
@@ -267,6 +305,20 @@ const Navbar_Sophisticated = () => {
                     }}
                   >
                     Sign In
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/admin/login"
+                    sx={{ 
+                      color: theme.palette.text.primary,
+                      fontWeight: 500,
+                      fontSize: '0.8rem',
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      },
+                    }}
+                  >
+                    Admin
                   </Button>
                   <PremiumButton component={Link} to="/register">
                     Open Account
@@ -339,8 +391,29 @@ const Navbar_Sophisticated = () => {
           {user ? (
             <Box>
               <Typography variant="body2" sx={{ mb: 2, color: theme.palette.text.secondary }}>
-                Welcome, {user.firstName || 'User'}
+                Welcome, {user.firstName || 'User'} {user.role === 'admin' && '(Admin)'}
               </Typography>
+              
+              {/* Show Admin Dashboard button for admin users */}
+              {user.role === 'admin' && (
+                <Button
+                  component={Link}
+                  to="/admin/dashboard"
+                  variant="contained"
+                  fullWidth
+                  onClick={handleMobileMenuToggle}
+                  sx={{ 
+                    mb: 2,
+                    backgroundColor: theme.palette.warning.main,
+                    '&:hover': {
+                      backgroundColor: theme.palette.warning.dark,
+                    },
+                  }}
+                >
+                  Admin Dashboard
+                </Button>
+              )}
+              
               <Button
                 fullWidth
                 variant="outlined"
@@ -361,6 +434,16 @@ const Navbar_Sophisticated = () => {
                 onClick={handleMobileMenuToggle}
               >
                 Sign In
+              </Button>
+              <Button
+                component={Link}
+                to="/admin/login"
+                variant="outlined"
+                fullWidth
+                onClick={handleMobileMenuToggle}
+                size="small"
+              >
+                Admin Login
               </Button>
               <PremiumButton
                 component={Link}

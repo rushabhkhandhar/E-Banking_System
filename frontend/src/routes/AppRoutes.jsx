@@ -18,6 +18,7 @@ import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
 
 // Admin pages
+import AdminLogin from '../pages/admin/AdminLogin';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import UserManagement from '../pages/admin/UserManagement';
 import AccountManagement from '../pages/admin/AccountManagement';
@@ -34,6 +35,7 @@ function AppRoutes() {
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       
       {/* Auth Routes - redirect if already logged in */}
       <Route 
@@ -78,6 +80,11 @@ function AppRoutes() {
       } />
 
       {/* Admin Routes */}
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute adminOnly>
+          <AdminDashboard />
+        </ProtectedRoute>
+      } />
       <Route path="/admin" element={
         <ProtectedRoute adminOnly>
           <AdminDashboard />
