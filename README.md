@@ -1,52 +1,212 @@
-# E-Banking System - MERN Stack
+# E-Banking System
 
-A comprehensive E-Banking System built using the MERN stack (MongoDB, Express.js, React.js, Node.js) that allows users to manage their banking operations securely.
+A comprehensive, production-ready E-Banking System built with the MERN stack (MongoDB, Express.js, React.js, Node.js). This system provides secure banking operations with user authentication, account management, and transaction processing.
 
 ## 🚀 Features
 
-### User Authentication & Management
-- ✅ User Registration (Name, Email, Password, Account Type)
-- ✅ Secure Login (JWT-based authentication)
-- ✅ Logout & Session Handling
-- ✅ Profile Management (Update Name, Password)
+### 🔐 Authentication & Security
+- User registration with email verification
+- Secure JWT-based authentication
+- Password reset functionality
+- Role-based access control (User/Admin)
+- Rate limiting and security middleware
 
-### Dashboard
-- ✅ View Account Details (User Info, Balance, Account Type)
-- ✅ Quick Access to Deposit, Withdraw, Transfer
+### 💳 Account Management
+- Create multiple account types (Checking, Savings, Credit)
+- View account details and balances
+- Update account information
+- Freeze/unfreeze accounts
+- Account closure with balance transfer
+- Account statements and history
 
-### Transactions
-- ✅ Deposit Money
-- ✅ Withdraw Money (Ensures sufficient balance)
-- ✅ Fund Transfer (Transfer to other accounts)
-- ✅ Transaction History (View transactions with filters)
+### 💰 Transaction Operations
+- Deposit money with limits and validation
+- Withdraw money with balance checks
+- Transfer funds between accounts
+- Transaction history with filtering
+- Real-time balance updates
+- Transaction reversal (Admin)
 
-### Security Features
-- ✅ Password Hashing (bcrypt.js)
-- ✅ JWT Authentication (Token-based login)
-- ✅ Validation & Error Handling
+### 🛡️ Admin Panel
+- Manage all users and accounts
+- Force account operations
+- View all transactions across the system
+- User management and analytics
+- System monitoring and controls
 
-### Admin Panel (Optional)
-- ✅ View Users & Transactions
-- ✅ Manage Deposits & Withdrawals
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React.js** (with Vite)
-- **Bootstrap** for UI styling
-- **Axios** for API calls
-- **React Router** for navigation
+## 🛠️ Technology Stack
 
 ### Backend
-- **Node.js**
-- **Express.js**
-- **MongoDB** with Mongoose ODM
-- **JWT** for authentication
-- **bcrypt.js** for password hashing
-- **CORS** for cross-origin requests
+- **Node.js** - Runtime environment
+- **Express.js** - Web application framework
+- **MongoDB** - NoSQL database
+- **Mongoose** - MongoDB object modeling
+- **JWT** - JSON Web Tokens for authentication
+- **bcrypt** - Password hashing
+- **Helmet** - Security middleware
+- **Morgan** - HTTP request logger
+- **CORS** - Cross-origin resource sharing
 
-### Database
-- **MongoDB** (Mongoose ORM)
+### Frontend (Ready for development)
+- **React.js** - Frontend framework
+- **Vite** - Build tool
+- **Bootstrap** - UI framework
+
+## 📋 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `POST /api/v1/auth/forgot-password` - Forgot password
+- `PATCH /api/v1/auth/reset-password/:token` - Reset password
+
+### User Management
+- `GET /api/v1/users/me` - Get current user
+- `PATCH /api/v1/users/me` - Update user profile
+- `DELETE /api/v1/users/me` - Delete user account
+
+### Account Management
+- `POST /api/v1/accounts` - Create new account
+- `GET /api/v1/accounts` - Get user accounts
+- `GET /api/v1/accounts/:id` - Get account details
+- `PATCH /api/v1/accounts/:id` - Update account
+- `PATCH /api/v1/accounts/:id/freeze` - Freeze account
+- `PATCH /api/v1/accounts/:id/unfreeze` - Unfreeze account
+- `DELETE /api/v1/accounts/:id` - Close account
+
+### Transactions
+- `POST /api/v1/transactions/deposit/:accountId` - Deposit money
+- `POST /api/v1/transactions/withdraw/:accountId` - Withdraw money
+- `POST /api/v1/transactions/transfer/:fromAccountId` - Transfer funds
+- `GET /api/v1/transactions/account/:accountId` - Get transaction history
+- `GET /api/v1/transactions/user` - Get all user transactions
+
+### Admin Routes
+- `GET /api/v1/admin/users` - Get all users
+- `GET /api/v1/admin/accounts` - Get all accounts
+- `GET /api/v1/admin/transactions` - Get all transactions
+- `PATCH /api/v1/admin/users/:id` - Update user (admin)
+- `DELETE /api/v1/admin/accounts/:id/force-close` - Force close account
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v14 or higher)
+- MongoDB
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/E-Banking_System.git
+   cd E-Banking_System
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the backend directory:
+   ```env
+   NODE_ENV=development
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/ebanking
+   JWT_SECRET=your-jwt-secret-key
+   JWT_EXPIRES_IN=7d
+   EMAIL_FROM=noreply@ebanking.com
+   ```
+
+4. **Start the Backend Server**
+   ```bash
+   npm start
+   ```
+
+5. **Frontend Setup** (Optional)
+   ```bash
+   cd ../frontend
+   npm install
+   npm run dev
+   ```
+
+### 🧪 Testing with Postman
+
+Import the included Postman collection `E-Banking_System_API_Collection_Complete.json` to test all API endpoints.
+
+## 📁 Project Structure
+
+```
+E-Banking_System/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/     # Request handlers
+│   │   ├── models/         # Database models
+│   │   ├── routes/         # API routes
+│   │   ├── middleware/     # Custom middleware
+│   │   ├── utils/          # Utility functions
+│   │   └── server.js       # Entry point
+│   ├── config/             # Configuration files
+│   └── package.json
+├── frontend/               # React frontend (ready for development)
+├── E-Banking_System_API_Collection_Complete.json  # Postman collection
+└── README.md
+```
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Input validation and sanitization
+- Rate limiting
+- CORS configuration
+- Helmet security headers
+- MongoDB injection protection
+
+## 🎯 Business Logic
+
+- Account balance validation
+- Transaction limits and checks
+- Overdraft protection
+- Account freeze/unfreeze functionality
+- Atomic transactions for transfers
+- Comprehensive error handling
+
+## 📈 Future Enhancements
+
+- [ ] Frontend React application
+- [ ] Real-time notifications
+- [ ] Mobile app integration
+- [ ] Advanced analytics dashboard
+- [ ] Two-factor authentication
+- [ ] Automated testing suite
+- [ ] CI/CD pipeline
+
+## 👨‍💻 Developer
+
+**Rushabh Khandhar**
+- Portfolio: [Your Portfolio]
+- LinkedIn: [Your LinkedIn]
+- Email: [Your Email]
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+⭐ **Star this repository if you found it helpful!**
 
 ### API Testing
 - **Postman**
