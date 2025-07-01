@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getProfile();
           dispatch({ 
             type: AuthActionTypes.LOAD_USER_SUCCESS, 
-            payload: response.user 
+            payload: response.data?.user || response.user 
           });
         } catch (error) {
           dispatch({ 

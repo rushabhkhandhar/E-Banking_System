@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Base URL for your backend
-const BASE_URL = 'http://localhost:5000/api';
+// Base URL for your backend - matches the API collection
+const BASE_URL = 'http://localhost:5000/api/v1';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -48,25 +48,36 @@ export const authAPI = {
   },
 
   register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post('/auth/signup', userData);
     return response.data;
   },
 
   getProfile: async () => {
-    const response = await api.get('/auth/profile');
+    const response = await api.get('/auth/me');
     return response.data;
   },
 
   updateProfile: async (userData) => {
-    const response = await api.put('/auth/profile', userData);
+    const response = await api.patch('/users/profile', userData);
     return response.data;
   },
 
-  changePassword: async (oldPassword, newPassword) => {
-    const response = await api.put('/auth/change-password', {
-      oldPassword,
-      newPassword,
+  changePassword: async (currentPassword, password, passwordConfirm) => {
+    const response = await api.patch('/auth/update-password', {
+      passwordCurrent: currentPassword,
+      password,
+      passwordConfirm,
     });
+    return response.data;
+  },
+
+  forgotPassword: async (email) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  logout: async () => {
+    const response = await api.post('/auth/logout');
     return response.data;
   },
 };
