@@ -76,6 +76,11 @@ export const authAPI = {
     return response.data;
   },
 
+  resendVerificationEmail: async (email) => {
+    const response = await api.post('/auth/resend-verification', { email });
+    return response.data;
+  },
+
   logout: async () => {
     const response = await api.post('/auth/logout');
     return response.data;
