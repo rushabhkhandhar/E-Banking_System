@@ -50,54 +50,54 @@ function AppRoutes() {
       {/* Protected Routes */}
       <Route path="/dashboard" element={
         <ProtectedRoute>
-          <Dashboard />
+          <Dashboard key={user?.id || 'dashboard'} />
         </ProtectedRoute>
       } />
       <Route path="/accounts" element={
         <ProtectedRoute>
-          <Accounts />
+          <Accounts key={user?.id || 'accounts'} />
         </ProtectedRoute>
       } />
       <Route path="/transactions" element={
         <ProtectedRoute>
-          <Transactions />
+          <Transactions key={user?.id || 'transactions'} />
         </ProtectedRoute>
       } />
       <Route path="/transfer" element={
         <ProtectedRoute>
-          <Transfer />
+          <Transfer key={user?.id || 'transfer'} />
         </ProtectedRoute>
       } />
       <Route path="/profile" element={
         <ProtectedRoute>
-          <Profile />
+          <Profile key={user?.id || 'profile'} />
         </ProtectedRoute>
       } />
       <Route path="/settings" element={
         <ProtectedRoute>
-          <Settings />
+          <Settings key={user?.id || 'settings'} />
         </ProtectedRoute>
       } />
 
       {/* Admin Routes */}
       <Route path="/admin/dashboard" element={
         <ProtectedRoute adminOnly>
-          <AdminDashboard />
+          <AdminDashboard key={user?.id || 'admin-dashboard'} />
         </ProtectedRoute>
       } />
       <Route path="/admin" element={
         <ProtectedRoute adminOnly>
-          <AdminDashboard />
+          <AdminDashboard key={user?.id || 'admin'} />
         </ProtectedRoute>
       } />
       <Route path="/admin/users" element={
         <ProtectedRoute adminOnly>
-          <UserManagement />
+          <UserManagement key={user?.id || 'admin-users'} />
         </ProtectedRoute>
       } />
       <Route path="/admin/accounts" element={
         <ProtectedRoute adminOnly>
-          <AccountManagement />
+          <AccountManagement key={user?.id || 'admin-accounts'} />
         </ProtectedRoute>
       } />
 

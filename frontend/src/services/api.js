@@ -18,6 +18,19 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add cache-busting headers for all requests to prevent stale data
+    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    config.headers['Pragma'] = 'no-cache';
+    config.headers['Expires'] = '0';
+    
+    // Add timestamp to GET requests for additional cache busting
+    if (config.method === 'get') {
+      const timestamp = new Date().getTime();
+      const separator = config.url.includes('?') ? '&' : '?';
+      config.url = `${config.url}${separator}_t=${timestamp}`;
+    }
+    
     return config;
   },
   (error) => {
@@ -32,8 +45,11 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - clear all stored data
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      sessionStorage.clear();
       window.location.href = '/login';
     }
     return Promise.reject(error);

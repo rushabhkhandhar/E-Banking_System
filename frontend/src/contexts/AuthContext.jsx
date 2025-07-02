@@ -78,7 +78,14 @@ const authReducer = (state, action) => {
       };
     
     case AuthActionTypes.LOGOUT:
+      // Clear all localStorage items related to authentication
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      
+      // Clear any cached API data
+      sessionStorage.clear();
+      
       return {
         ...state,
         token: null,
@@ -113,6 +120,10 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           dispatch({ type: AuthActionTypes.LOAD_USER_START });
+          
+          // Clear any cached data before loading new user
+          sessionStorage.clear();
+          
           const response = await authAPI.getProfile();
           dispatch({ 
             type: AuthActionTypes.LOAD_USER_SUCCESS, 
@@ -124,6 +135,7 @@ export const AuthProvider = ({ children }) => {
             payload: handleAPIError(error) 
           });
           localStorage.removeItem('token');
+          sessionStorage.clear();
         }
       } else {
         dispatch({ 
@@ -140,6 +152,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       dispatch({ type: AuthActionTypes.LOGIN_START });
+      
+      // Clear any existing cached data before login
+      sessionStorage.clear();
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      
       const response = await authAPI.login(email, password);
       
       // Handle backend response structure: { status, message, token, data: { user } }
@@ -196,8 +214,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    dispatch({ type: AuthActionTypes.LOGOUT });
+  const logout = async () => {
+    try {
+      // Call backend logout to invalidate session
+      await authAPI.logout();
+    } catch (error) {
+      // Even if backend logout fails, we still want to clear frontend state
+      console.warn('Backend logout failed, but continuing with frontend logout');
+    } finally {
+      // Always clear frontend state completely
+      dispatch({ type: AuthActionTypes.LOGOUT });
+      
+      // Clear browser storage completely
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Clear any cached request data
+      if (window.caches) {
+        caches.keys().then(names => {
+          names.forEach(name => {
+            caches.delete(name);
+          });
+        });
+      }
+      
+      // Force page reload to completely reset application state
+      window.location.href = '/login';
+    }
   };
 
   // Update profile function

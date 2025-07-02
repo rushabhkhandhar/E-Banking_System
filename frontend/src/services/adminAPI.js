@@ -15,9 +15,24 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add cache-busting headers
+    config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    config.headers['Pragma'] = 'no-cache';
+    config.headers['Expires'] = '0';
+    
+    // Debug admin requests
+    console.log('🔧 Admin API Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      hasAuth: !!token
+    });
+    
     return config;
   },
   (error) => {
+    console.error('❌ Admin API Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -25,12 +40,27 @@ apiClient.interceptors.request.use(
 // Add response interceptor to handle errors
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('✅ Admin API Response:', {
+      status: response.status,
+      url: response.config.url,
+      method: response.config.method?.toUpperCase()
+    });
     return response;
   },
   (error) => {
+    console.error('❌ Admin API Response Error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method?.toUpperCase(),
+      message: error.response?.data?.message || error.message
+    });
+    
     if (error.response?.status === 401) {
       // Token expired or invalid
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userRole');
+      sessionStorage.clear();
       window.location.href = '/admin/login';
     }
     return Promise.reject(error);
@@ -46,20 +76,20 @@ export const adminAPI = {
   getDashboardStats: () => apiClient.get('/admin/dashboard/stats'),
   
   // User management
-  getAllUsers: () => apiClient.get('/admin/users'),
+  getAllUsers: (params) => apiClient.get('/admin/users', { params }),
   getUserDetails: (userId) => apiClient.get(`/admin/users/${userId}`),
-  toggleUserStatus: (userId, isActive) => apiClient.patch(`/admin/users/${userId}/status`, { isActive }),
+  toggleUserStatus: (userId, isActive, reason) => apiClient.patch(`/admin/users/${userId}/status`, { isActive, reason }),
   activateUser: (userId) => apiClient.patch(`/admin/users/${userId}/activate`),
-  deactivateUser: (userId) => apiClient.patch(`/admin/users/${userId}/deactivate`),
-  deleteUser: (userId) => apiClient.delete(`/admin/users/${userId}`),
+  deactivateUser: (userId, reason) => apiClient.patch(`/admin/users/${userId}/deactivate`, { reason }),
+  deleteUser: (userId, reason) => apiClient.delete(`/admin/users/${userId}`, { data: { reason } }),
   
   // Account management
   getAllAccounts: () => apiClient.get('/admin/accounts'),
-  toggleAccountFreeze: (accountId, isFrozen) => apiClient.patch(`/admin/accounts/${accountId}/freeze`, { isFrozen }),
+  toggleAccountFreeze: (accountId, freeze, reason) => apiClient.patch(`/admin/accounts/${accountId}/freeze`, { freeze, reason }),
   updateAccount: (accountId, data) => apiClient.patch(`/admin/accounts/${accountId}/update`, data),
-  forceCloseAccount: (accountId) => apiClient.delete(`/admin/accounts/${accountId}/force-close`),
-  manualDeposit: (accountId, amount) => apiClient.post(`/admin/accounts/${accountId}/deposit`, { amount }),
-  manualWithdraw: (accountId, amount) => apiClient.post(`/admin/accounts/${accountId}/withdraw`, { amount }),
+  forceCloseAccount: (accountId, reason, forceClose = false) => apiClient.patch(`/admin/accounts/${accountId}/force-close`, { reason, forceClose }),
+  manualDeposit: (accountId, amount, description, reason) => apiClient.post(`/admin/accounts/${accountId}/deposit`, { amount, description, reason }),
+  manualWithdraw: (accountId, amount, description, reason) => apiClient.post(`/admin/accounts/${accountId}/withdraw`, { amount, description, reason }),
   
   // Transaction management
   getAllTransactions: () => apiClient.get('/admin/transactions'),

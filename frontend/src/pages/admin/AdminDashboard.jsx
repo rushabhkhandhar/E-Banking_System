@@ -113,6 +113,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [showClosedAccounts, setShowClosedAccounts] = useState(false);
   
   // Dialog states
   const [openUserDialog, setOpenUserDialog] = useState(false);
@@ -125,12 +126,15 @@ const AdminDashboard = () => {
   const [manualTransactionData, setManualTransactionData] = useState({
     type: 'deposit',
     amount: '',
-    accountId: ''
+    accountId: '',
+    description: ''
   });
 
   // Check if current user is admin
   useEffect(() => {
+    console.log('🔍 Admin Dashboard - Current user:', user);
     if (user && user.role !== 'admin') {
+      console.log('❌ User is not admin, redirecting...');
       navigate('/dashboard');
     }
   }, [user, navigate]);
@@ -147,23 +151,27 @@ const AdminDashboard = () => {
   // Fetch dashboard stats
   const fetchDashboardStats = async () => {
     try {
+      console.log('🔄 Fetching dashboard stats...');
       const response = await adminAPI.getDashboardStats();
+      console.log('✅ Dashboard stats response:', response);
       setDashboardStats(response.data.data || response.data);
     } catch (err) {
-      console.error('Stats error:', err);
-      // Don't show error for stats as it's not critical
+      console.error('❌ Stats error:', err);
+      setError(`Failed to fetch dashboard stats: ${err.response?.data?.message || err.message}`);
     }
   };
 
   // Fetch all users
   const fetchUsers = async () => {
     try {
+      console.log('🔄 Fetching users...');
       setLoading(true);
       const response = await adminAPI.getAllUsers();
+      console.log('✅ Users response:', response);
       setUsers(response.data.data?.users || response.data.users || response.data || []);
     } catch (err) {
-      setError('Failed to fetch users');
-      console.error('Users error:', err);
+      console.error('❌ Users error:', err);
+      setError(`Failed to fetch users: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -183,12 +191,14 @@ const AdminDashboard = () => {
   // Fetch all accounts
   const fetchAccounts = async () => {
     try {
+      console.log('🔄 Fetching accounts...');
       setLoading(true);
       const response = await adminAPI.getAllAccounts();
+      console.log('✅ Accounts response:', response);
       setAccounts(response.data.data?.accounts || response.data.accounts || response.data || []);
     } catch (err) {
-      setError('Failed to fetch accounts');
-      console.error('Accounts error:', err);
+      console.error('❌ Accounts error:', err);
+      setError(`Failed to fetch accounts: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -197,12 +207,14 @@ const AdminDashboard = () => {
   // Fetch all transactions
   const fetchTransactions = async () => {
     try {
+      console.log('🔄 Fetching transactions...');
       setLoading(true);
       const response = await adminAPI.getAllTransactions();
+      console.log('✅ Transactions response:', response);
       setTransactions(response.data.data?.transactions || response.data.transactions || response.data || []);
     } catch (err) {
-      setError('Failed to fetch transactions');
-      console.error('Transactions error:', err);
+      console.error('❌ Transactions error:', err);
+      setError(`Failed to fetch transactions: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -210,9 +222,12 @@ const AdminDashboard = () => {
 
   // Toggle user status (activate/deactivate)
   const toggleUserStatus = async (userId, currentStatus) => {
+    const reason = prompt(`Please provide a reason for ${currentStatus ? 'deactivating' : 'activating'} this user:`);
+    if (reason === null) return;
+    
     try {
       setLoading(true);
-      await adminAPI.toggleUserStatus(userId, !currentStatus);
+      await adminAPI.toggleUserStatus(userId, !currentStatus, reason);
       setSuccess('User status updated successfully');
       await fetchUsers();
     } catch (err) {
@@ -252,10 +267,13 @@ const AdminDashboard = () => {
 
   // Delete user profile
   const deleteUserProfile = async (userId) => {
+    const reason = prompt('Please provide a reason for deleting this user:');
+    if (reason === null) return;
+    
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
         setLoading(true);
-        await adminAPI.deleteUser(userId);
+        await adminAPI.deleteUser(userId, reason);
         setSuccess('User deleted successfully');
         await fetchUsers();
       } catch (err) {
@@ -268,9 +286,12 @@ const AdminDashboard = () => {
 
   // Toggle account freeze
   const toggleAccountFreeze = async (accountId, currentStatus) => {
+    const reason = prompt(`Please provide a reason for ${currentStatus ? 'unfreezing' : 'freezing'} this account:`);
+    if (reason === null) return;
+    
     try {
       setLoading(true);
-      await adminAPI.toggleAccountFreeze(accountId, !currentStatus);
+      await adminAPI.toggleAccountFreeze(accountId, !currentStatus, reason);
       setSuccess('Account status updated successfully');
       await fetchAccounts();
     } catch (err) {
@@ -296,14 +317,36 @@ const AdminDashboard = () => {
 
   // Force close account
   const forceCloseAccount = async (accountId) => {
+    const reason = prompt('Please provide a reason for closing this account:');
+    if (reason === null) return;
+    
     if (window.confirm('Are you sure you want to force close this account? This action cannot be undone.')) {
       try {
         setLoading(true);
-        await adminAPI.forceCloseAccount(accountId);
+        await adminAPI.forceCloseAccount(accountId, reason, false);
         setSuccess('Account closed successfully');
         await fetchAccounts();
       } catch (err) {
-        setError('Failed to close account');
+        const errorMessage = err.response?.data?.message || 'Failed to close account';
+        
+        // If account has positive balance, ask if admin wants to force close
+        if (errorMessage.includes('positive balance')) {
+          const forceClose = window.confirm(
+            `${errorMessage}\n\nDo you want to force close this account anyway? The remaining balance will be noted in the closure.`
+          );
+          
+          if (forceClose) {
+            try {
+              await adminAPI.forceCloseAccount(accountId, reason, true);
+              setSuccess('Account force closed successfully');
+              await fetchAccounts();
+            } catch (forceErr) {
+              setError('Failed to force close account');
+            }
+          }
+        } else {
+          setError(errorMessage);
+        }
       } finally {
         setLoading(false);
       }
@@ -312,16 +355,35 @@ const AdminDashboard = () => {
 
   // Manual deposit/withdrawal
   const handleManualTransaction = async () => {
+    if (!manualTransactionData.amount || parseFloat(manualTransactionData.amount) <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+    
+    const description = manualTransactionData.description || `Manual admin ${manualTransactionData.type}`;
+    const reason = prompt(`Please provide a reason for this manual ${manualTransactionData.type}:`);
+    if (reason === null) return;
+    
     try {
       setLoading(true);
       if (manualTransactionData.type === 'deposit') {
-        await adminAPI.manualDeposit(manualTransactionData.accountId, parseFloat(manualTransactionData.amount));
+        await adminAPI.manualDeposit(
+          manualTransactionData.accountId, 
+          parseFloat(manualTransactionData.amount),
+          description,
+          reason
+        );
       } else {
-        await adminAPI.manualWithdraw(manualTransactionData.accountId, parseFloat(manualTransactionData.amount));
+        await adminAPI.manualWithdraw(
+          manualTransactionData.accountId, 
+          parseFloat(manualTransactionData.amount),
+          description,
+          reason
+        );
       }
       setSuccess(`Manual ${manualTransactionData.type} completed successfully`);
       setOpenManualTransactionDialog(false);
-      setManualTransactionData({ type: 'deposit', amount: '', accountId: '' });
+      setManualTransactionData({ type: 'deposit', amount: '', accountId: '', description: '' });
       await fetchAccounts();
       if (transactions.length > 0) await fetchTransactions();
     } catch (err) {
@@ -353,15 +415,46 @@ const AdminDashboard = () => {
     setOpenManualTransactionDialog(true);
   };
 
+  // Refresh all dashboard data
+  const refreshAllData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchDashboardStats(),
+        fetchUsers(),
+        fetchAccounts(),
+        fetchTransactions()
+      ]);
+      setSuccess('Dashboard data refreshed successfully');
+    } catch (error) {
+      setError('Failed to refresh some data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetchDashboardStats();
-    fetchUsers();
-  }, []);
+    console.log('🔄 Admin Dashboard useEffect - User:', user);
+    if (user && user.role === 'admin') {
+      console.log('✅ Admin user confirmed, fetching data...');
+      // Always refresh data when admin dashboard loads
+      fetchDashboardStats();
+      fetchUsers();
+      fetchAccounts();
+      fetchTransactions();
+    } else if (user) {
+      console.log('❌ User is not admin:', user.role);
+    } else {
+      console.log('⏳ No user loaded yet...');
+    }
+  }, [user]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    if (newValue === 2 && accounts.length === 0) fetchAccounts();
-    if (newValue === 3 && transactions.length === 0) fetchTransactions();
+    // Refresh data when switching tabs to ensure fresh data
+    if (newValue === 1) fetchUsers();
+    if (newValue === 2) fetchAccounts();
+    if (newValue === 3) fetchTransactions();
   };
 
   const StatCard = ({ title, value, icon, color, subtitle }) => (
@@ -818,12 +911,19 @@ const AdminDashboard = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip 
-                              label={account.isFrozen ? 'Frozen' : 'Active'} 
-                              color={account.isFrozen ? 'error' : 'success'}
-                              size="small"
-                              variant="filled"
-                            />
+                            <Stack spacing={0.5}>
+                              <Chip 
+                                label={!account.isActive ? 'Closed' : account.isFrozen ? 'Frozen' : 'Active'} 
+                                color={!account.isActive ? 'default' : account.isFrozen ? 'error' : 'success'}
+                                size="small"
+                                variant="filled"
+                              />
+                              {!account.isActive && account.closedAt && (
+                                <Typography variant="caption" color="text.secondary">
+                                  Closed {new Date(account.closedAt).toLocaleDateString()}
+                                </Typography>
+                              )}
+                            </Stack>
                           </TableCell>
                           <TableCell>
                             <Box>
@@ -842,37 +942,44 @@ const AdminDashboard = () => {
                                   size="small"
                                   onClick={() => toggleAccountFreeze(account._id, account.isFrozen)}
                                   color={account.isFrozen ? 'success' : 'error'}
+                                  disabled={!account.isActive}
                                 >
                                   {account.isFrozen ? <CheckCircle /> : <Block />}
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Manual Deposit">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openManualTransactionModal(account._id, 'deposit')}
-                                  color="success"
-                                >
-                                  <Add />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Manual Withdrawal">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => openManualTransactionModal(account._id, 'withdraw')}
-                                  color="warning"
-                                >
-                                  <Download />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Force Close Account">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => forceCloseAccount(account._id)}
-                                  color="error"
-                                >
-                                  <Delete />
-                                </IconButton>
-                              </Tooltip>
+                              {account.isActive && !account.isFrozen && (
+                                <>
+                                  <Tooltip title="Manual Deposit">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => openManualTransactionModal(account._id, 'deposit')}
+                                      color="success"
+                                    >
+                                      <Add />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Manual Withdrawal">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => openManualTransactionModal(account._id, 'withdraw')}
+                                      color="warning"
+                                    >
+                                      <Download />
+                                    </IconButton>
+                                  </Tooltip>
+                                </>
+                              )}
+                              {account.isActive && (
+                                <Tooltip title="Force Close Account">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => forceCloseAccount(account._id)}
+                                    color="error"
+                                  >
+                                    <Delete />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                             </Stack>
                           </TableCell>
                         </TableRow>

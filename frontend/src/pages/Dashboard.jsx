@@ -390,8 +390,10 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (user) {
+      loadDashboardData();
+    }
+  }, [user]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {

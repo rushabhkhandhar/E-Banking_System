@@ -19,9 +19,10 @@ exports.getDashboardStats = catchAsync(async (req, res, next) => {
 
     // Get basic counts
     const totalUsers = await User.countDocuments({ role: 'user' });
-    const totalAccounts = await Account.countDocuments();
+    const totalAccounts = await Account.countDocuments({ isActive: true }); // Only count active accounts
     const activeAccounts = await Account.countDocuments({ isActive: true });
-    const frozenAccounts = await Account.countDocuments({ isFrozen: true });
+    const frozenAccounts = await Account.countDocuments({ isFrozen: true, isActive: true }); // Only count frozen accounts that are still active
+    const closedAccounts = await Account.countDocuments({ isActive: false });
 
     // Get transaction statistics
     const transactionStats = await Transaction.aggregate([
@@ -120,6 +121,7 @@ exports.getDashboardStats = catchAsync(async (req, res, next) => {
                 totalAccounts,
                 activeAccounts,
                 frozenAccounts,
+                closedAccounts,
                 balanceStats: accountStats[0] || {
                     totalBalance: 0,
                     avgBalance: 0,
@@ -360,6 +362,16 @@ exports.manualDeposit = catchAsync(async (req, res, next) => {
         return next(new AppError('Account not found', 404));
     }
 
+    // Check if account is active
+    if (!account.isActive) {
+        return next(new AppError('Cannot perform transactions on a closed account', 400));
+    }
+
+    // Check if account is frozen
+    if (account.isFrozen) {
+        return next(new AppError('Cannot perform transactions on a frozen account', 400));
+    }
+
     // Update account balance and create transaction record
     const updatedAccount = await Account.findByIdAndUpdate(
         accountId,
@@ -409,6 +421,16 @@ exports.manualWithdrawal = catchAsync(async (req, res, next) => {
         return next(new AppError('Account not found', 404));
     }
 
+    // Check if account is active
+    if (!account.isActive) {
+        return next(new AppError('Cannot perform transactions on a closed account', 400));
+    }
+
+    // Check if account is frozen
+    if (account.isFrozen) {
+        return next(new AppError('Cannot perform transactions on a frozen account', 400));
+    }
+
     // Check if account has sufficient balance (admin can override)
     if (account.balance < amount) {
         return next(new AppError('Insufficient funds in account', 400));
@@ -456,14 +478,22 @@ exports.getAllAccounts = catchAsync(async (req, res, next) => {
         accountType, 
         isActive, 
         isFrozen,
+        showClosed = 'false',
         sortBy = 'createdAt',
         order = 'desc'
     } = req.query;
 
-    // Build query
+    // Build query - By default, only show active accounts unless specifically requested
     const query = {};
     if (accountType) query.accountType = accountType;
-    if (isActive !== undefined) query.isActive = isActive === 'true';
+    if (isActive !== undefined) {
+        query.isActive = isActive === 'true';
+    } else if (showClosed === 'true') {
+        // If specifically requesting to show closed accounts, don't filter by isActive
+    } else {
+        // Default to showing only active accounts
+        query.isActive = true;
+    }
     if (isFrozen !== undefined) query.isFrozen = isFrozen === 'true';
 
     // Build sort object
@@ -535,7 +565,7 @@ exports.updateAccount = catchAsync(async (req, res, next) => {
 // Force close account (Admin only)
 exports.forceCloseAccount = catchAsync(async (req, res, next) => {
     const { accountId } = req.params;
-    const { reason } = req.body;
+    const { reason, forceClose = false } = req.body;
 
     if (!reason) {
         return next(new AppError('Reason for account closure is required', 400));
@@ -550,8 +580,9 @@ exports.forceCloseAccount = catchAsync(async (req, res, next) => {
         return next(new AppError('Account is already closed', 400));
     }
 
-    if (account.balance > 0) {
-        return next(new AppError('Cannot close account with positive balance. Please withdraw funds first.', 400));
+    // Allow admin to force close accounts with positive balance if forceClose is true
+    if (account.balance > 0 && !forceClose) {
+        return next(new AppError(`Cannot close account with positive balance of $${account.balance.toFixed(2)}. Please withdraw funds first or use force close option.`, 400));
     }
 
     // Close the account
@@ -561,7 +592,8 @@ exports.forceCloseAccount = catchAsync(async (req, res, next) => {
             isActive: false,
             closedAt: new Date(),
             closureReason: reason,
-            closedBy: req.user.id
+            closedBy: req.user.id,
+            ...(account.balance > 0 && { finalBalance: account.balance })
         },
         { new: true }
     ).populate('userId', 'firstName lastName email');

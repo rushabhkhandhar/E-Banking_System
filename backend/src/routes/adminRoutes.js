@@ -30,7 +30,7 @@ router.delete('/users/:userId', adminController.deleteUserProfile);
 router.get('/accounts', adminController.getAllAccounts);
 router.patch('/accounts/:accountId/freeze', adminController.toggleAccountFreeze);
 router.patch('/accounts/:accountId/update', adminController.updateAccount);
-router.delete('/accounts/:accountId/force-close', adminController.forceCloseAccount);
+router.patch('/accounts/:accountId/force-close', adminController.forceCloseAccount);
 
 // Manual transactions
 router.post('/accounts/:accountId/deposit', adminController.manualDeposit);
