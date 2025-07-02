@@ -92,6 +92,25 @@ exports.getMyAccounts = catchAsync(async (req, res, next) => {
     });
 });
 
+// Get all accounts available for transfer (all accounts in database)
+exports.getTransferableAccounts = catchAsync(async (req, res, next) => {
+    // Get ALL active accounts in the database
+    const accounts = await Account.find({
+        isActive: true // Only include active accounts
+    })
+        .populate('userId', 'firstName lastName')
+        .select('accountNumber accountType userId balance')
+        .sort('accountNumber');
+
+    res.status(200).json({
+        status: 'success',
+        results: accounts.length,
+        data: {
+            accounts
+        }
+    });
+});
+
 // Get a specific account by ID
 exports.getAccount = catchAsync(async (req, res, next) => {
     const { accountId } = req.params;

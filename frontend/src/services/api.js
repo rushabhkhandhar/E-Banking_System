@@ -110,6 +110,11 @@ export const accountAPI = {
     return response.data;
   },
 
+  getTransferableAccounts: async () => {
+    const response = await api.get('/accounts/transfer/available');
+    return response.data;
+  },
+
   createAccount: async (accountData) => {
     const response = await api.post('/accounts', accountData);
     return response.data;

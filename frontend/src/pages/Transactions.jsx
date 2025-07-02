@@ -321,15 +321,19 @@ const Transactions = () => {
       if (filters.minAmount) filterParams.minAmount = parseFloat(filters.minAmount);
       if (filters.maxAmount) filterParams.maxAmount = parseFloat(filters.maxAmount);
       
-      const [transactionsResponse, accountsResponse] = await Promise.all([
+      const [transactionsResponse, accountsResponse, transferableAccountsResponse] = await Promise.all([
         transactionAPI.getAllUserTransactions(filterParams),
-        accountAPI.getAccounts()
+        accountAPI.getAccounts(),
+        accountAPI.getTransferableAccounts()
       ]);
       
       setTransactions(transactionsResponse.data?.transactions || transactionsResponse.transactions || []);
       setAccounts(accountsResponse.data?.accounts || accountsResponse.accounts || []);
-      // For now, use user's accounts as available transfer targets
-      setAllBankAccounts(accountsResponse.data?.accounts || accountsResponse.accounts || []);
+      // Use all transferable accounts from the database
+      const transferableAccounts = transferableAccountsResponse.data?.accounts || transferableAccountsResponse.accounts || [];
+      console.log('Transferable accounts loaded:', transferableAccounts.length);
+      console.log('Transferable accounts:', transferableAccounts);
+      setAllBankAccounts(transferableAccounts);
     } catch (error) {
       console.error('Error loading transactions:', error);
       showError('Failed to load transactions. Please try again.');

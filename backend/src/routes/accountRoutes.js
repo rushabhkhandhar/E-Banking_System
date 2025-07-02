@@ -10,6 +10,7 @@ router.use(protect);
 // User account management
 router.post('/', accountController.createAccount);
 router.get('/', accountController.getMyAccounts);
+router.get('/transfer/available', accountController.getTransferableAccounts);
 router.get('/:accountId', accountController.getAccount);
 router.patch('/:accountId', accountController.updateAccount);
 
